@@ -1,4 +1,4 @@
-# Staybnb — Full-stack Airbnb-inspired capstone (Parts 1–6)
+# Staybnb — Full-stack Airbnb-inspired capstone...
 
 A responsive Airbnb-style stay-booking application for learning/capstone use. This single project ZIP combines the Express/Mongoose backend and the React/Vite frontend. It includes JWT authentication, optional Google OAuth, property search and management, bookings with date locks, wishlists, verified reviews, local/Cloudinary image uploads, Stripe Checkout integration with a clearly marked development-only simulated payment mode, a dashboard, Indian demo listings, and a Postman collection.
 
