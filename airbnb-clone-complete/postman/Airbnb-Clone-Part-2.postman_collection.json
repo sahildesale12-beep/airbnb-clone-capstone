@@ -1,0 +1,574 @@
+{
+  "info": {
+    "name": "Airbnb Clone \u2014 Part 2 APIs",
+    "description": "Postman walkthrough for auth, host role, listings, availability, pending booking holds, wishlist and cancellation. Review submission requires a completed paid stay and is documented in README-PART-2.md.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/health"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('API health is OK', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql('ok'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Register host",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Capstone Host\",\n  \"email\": \"{{hostEmail}}\",\n  \"password\": \"SecurePass123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "",
+              "const email = 'host.' + Date.now() + '@example.com';",
+              "pm.collectionVariables.set('hostEmail', email);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "",
+              "if (pm.response.code === 200 || pm.response.code === 201) {",
+              "  const data = pm.response.json();",
+              "  if (data.token) pm.collectionVariables.set('hostToken', data.token);",
+              "}",
+              "",
+              "pm.test('Host account registered', function () { pm.response.to.have.status(201); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Become a host",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hostToken}}",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/become-host"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Account role is host', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().user.role).to.eql('host'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Create a property",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hostToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/properties",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Quiet hillside cottage with valley views\",\n  \"description\": \"A peaceful cottage surrounded by pine trees, with a private balcony and easy access to nearby walking trails.\",\n  \"images\": [\n    \"https://images.unsplash.com/photo-1505693416388-ac5ce068fe85\"\n  ],\n  \"price\": 4200,\n  \"location\": {\n    \"city\": \"Chail\",\n    \"state\": \"Himachal Pradesh\",\n    \"country\": \"India\",\n    \"lat\": 30.9666,\n    \"lng\": 77.1892\n  },\n  \"category\": \"bed-and-breakfast\",\n  \"propertyType\": \"cabin\",\n  \"amenities\": [\n    \"Wi-Fi\",\n    \"Heating\",\n    \"Free parking\"\n  ],\n  \"maxGuests\": 4,\n  \"bedrooms\": 2,\n  \"beds\": 2,\n  \"baths\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "",
+              "if (pm.response.code === 201) {",
+              "  const data = pm.response.json();",
+              "  if (data.data && data.data._id) pm.collectionVariables.set('propertyId', data.data._id);",
+              "}",
+              "",
+              "pm.test('Property created', function () { pm.response.to.have.status(201); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Search properties",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/properties?location=Chail&minPrice=1000&maxPrice=8000&guests=2&page=1&limit=12"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Property search returns a page', function () { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.have.property('pagination'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Get property details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/properties/{{propertyId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Property details returned', function () { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.have.property('data'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Get host listings",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hostToken}}",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/properties/host/mine"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Host listings returned', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Register guest",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Capstone Guest\",\n  \"email\": \"{{guestEmail}}\",\n  \"password\": \"SecurePass123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "",
+              "const email = 'guest.' + Date.now() + '@example.com';",
+              "pm.collectionVariables.set('guestEmail', email);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "",
+              "if (pm.response.code === 200 || pm.response.code === 201) {",
+              "  const data = pm.response.json();",
+              "  if (data.token) pm.collectionVariables.set('guestToken', data.token);",
+              "}",
+              "",
+              "pm.test('Guest account registered', function () { pm.response.to.have.status(201); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Add property to wishlist",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{guestToken}}",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/wishlist/{{propertyId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Wishlist toggle succeeded', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().isWishlisted).to.eql(true); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Get wishlist",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{guestToken}}",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/wishlist"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Wishlist returned', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Check availability",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/bookings/check-availability?propertyId={{propertyId}}&checkIn={{checkIn}}&checkOut={{checkOut}}&guests=2"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "",
+              "function dateIn(days) {",
+              "  const value = new Date();",
+              "  value.setUTCHours(0, 0, 0, 0);",
+              "  value.setUTCDate(value.getUTCDate() + days);",
+              "  return value.toISOString().slice(0, 10);",
+              "}",
+              "pm.collectionVariables.set('checkIn', dateIn(14));",
+              "pm.collectionVariables.set('checkOut', dateIn(17));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Availability checked', function () { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.have.property('available'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Create booking hold",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{guestToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/bookings",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"propertyId\": \"{{propertyId}}\",\n  \"checkIn\": \"{{checkIn}}\",\n  \"checkOut\": \"{{checkOut}}\",\n  \"guests\": 2\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "",
+              "function dateIn(days) {",
+              "  const value = new Date();",
+              "  value.setUTCHours(0, 0, 0, 0);",
+              "  value.setUTCDate(value.getUTCDate() + days);",
+              "  return value.toISOString().slice(0, 10);",
+              "}",
+              "pm.collectionVariables.set('checkIn', dateIn(14));",
+              "pm.collectionVariables.set('checkOut', dateIn(17));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "",
+              "if (pm.response.code === 201) {",
+              "  const data = pm.response.json();",
+              "  if (data.data && data.data._id) pm.collectionVariables.set('bookingId', data.data._id);",
+              "}",
+              "",
+              "pm.test('Booking hold created', function () { pm.response.to.have.status(201); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Get my bookings",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{guestToken}}",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/bookings/my"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Guest bookings returned', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Get host bookings",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hostToken}}",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/bookings/host"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Host bookings returned', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15. Cancel unpaid booking hold",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{guestToken}}",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/bookings/{{bookingId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Booking hold cancelled', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16. Remove property from wishlist",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{guestToken}}",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/wishlist/{{propertyId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Wishlist toggle removed property', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().isWishlisted).to.eql(false); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17. Delete property",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hostToken}}",
+            "type": "text"
+          }
+        ],
+        "url": "{{baseUrl}}/api/properties/{{propertyId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Property deleted after cancelling hold', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "hostToken",
+      "value": ""
+    },
+    {
+      "key": "guestToken",
+      "value": ""
+    },
+    {
+      "key": "hostEmail",
+      "value": ""
+    },
+    {
+      "key": "guestEmail",
+      "value": ""
+    },
+    {
+      "key": "propertyId",
+      "value": ""
+    },
+    {
+      "key": "bookingId",
+      "value": ""
+    },
+    {
+      "key": "checkIn",
+      "value": ""
+    },
+    {
+      "key": "checkOut",
+      "value": ""
+    }
+  ]
+}

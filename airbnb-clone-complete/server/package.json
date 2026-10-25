@@ -1,0 +1,36 @@
+{
+  "name": "airbnb-clone-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Express/Mongoose backend for the Staybnb capstone project",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "check": "node scripts/check-syntax.js",
+    "seed": "node scripts/seed.js"
+  },
+  "engines": { "node": ">=22.12.0" },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.7.0",
+    "connect-mongo": "^5.1.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "express-validator": "^7.2.1",
+    "express-session": "^1.18.2",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb-memory-server": "^11.3.0",
+    "mongoose": "^9.11.3",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "stripe": "^18.5.0"
+  },
+  "devDependencies": { "nodemon": "^3.1.10" }
+}
